@@ -1,6 +1,12 @@
+import time
+
 
 class DataGSM:
-    def __init__(self):
+    def __init__(self,
+                 serial_port_gsm,
+                 on_off_txt_mode,
+                 format_txt_mode,
+                 ):
         """ Predefined commands for gsm module """
         """ AT+<x>=? -> test
             AT+<x>?  -> read
@@ -12,6 +18,8 @@ class DataGSM:
         """
         self.status = ''
         self.number = ''
+        self.text_mode_param = 'AT+CSMP'
+        self.enable_errors_as_string = 'AT+CMEE=2'
         self.format_msg = 'AT+CMGF' # 0 - PDU 1 - Txt
         self.search_network = 'AT+COPS'  # =0 for auto
         self.mobile_phone_status = 'AT+CPAS'
@@ -23,11 +31,36 @@ class DataGSM:
         self.write_msg_to_mem = 'AT+CMGW'
         self.new_msg_notifications = 'AT+CNMI'
 
+        """ Init part """
+        """ For txt msg -> text mode, storage and char set """
+        if on_off_txt_mode:
+            serial_port_gsm.write(self.format_msg + '=1\r')
+            self.delay(1000)
+            if not format_txt_mode:
+                serial_port_gsm.write(self.text_mode_param + '=17,167,0,0\r')
+                self.delay(1000)
+                # <fo>,<vp>,<pid>,<dcs>
+                # <fo> - sms-submit
+                # <vp> - integer format for TP-Validity-Period
+                # <pid> - protocol identifier in integer format
+                # <dcs> - data coding scheme
+        else:
+            serial_port_gsm.write(self.format_msg + '=0\r')
+            self.delay(1000)
+
+        #TODO: implement for storage selection from gsm module
+
+
     def read_message(self, idx):
 
     def send_message(self, msg):
 
-    def delay(self):
+    def delay(self, timeout_msec):
+        """ On uPython use internal clock to create delays
+            through timers
+        """
+        timeout_msec = timeout_msec/1000
+        time.sleep(timeout_msec)
 
     def command(self):
 

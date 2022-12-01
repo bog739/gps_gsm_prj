@@ -2,6 +2,7 @@
 """ Libraries in use """
 import serial
 import webbrowser
+import time
 
 from serial.tools import list_ports
 from gsm_linker import DataGSM
@@ -48,6 +49,9 @@ if __name__ == "__main__":
 
     data_line_extracted = 10
     ob_data_gps = DataGPS()
+    ob_data_gsm = DataGSM(serial_port_gsm=serialPortGsm,
+                          on_off_txt_mode=True,
+                          format_txt_mode=False)
     try:
         for i in range(data_line_extracted):
             startByte = serialPortGps.read(1)
