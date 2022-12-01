@@ -22,6 +22,10 @@ class DataGPS:
     def add_string(self, item):
         self.message.append(item)
 
+    def delete_string(self):
+        del self.message
+        self.message = []
+
     def parse_message(self):
         """
         Function to parse the string of bytes coming from a GPS module,

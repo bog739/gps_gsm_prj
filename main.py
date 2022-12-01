@@ -1,85 +1,76 @@
+""""
+GPS 9600,   8, N, 1     -> 3.3V
+GSM     115200, 8, N, 1 -> 5V
+"""
 
-""" Libraries in use """
-import serial
-import webbrowser
-import time
-
-from serial.tools import list_ports
 from gsm_linker import DataGSM
-from gps_linker import DataGPS
 from url_format import URL
 
+from machine import Pin, UART
+from gps_linker import DataGPS
 
-def swap(prev_val_x, prev_val_y):
-    a, b = prev_val_y, prev_val_x
-    return a, b
+import time
+import binascii
 
+if __name__ == '__main__':
+    led_ps = Pin(25, Pin.OUT)  # led PS -> RaspberryPiPico
+    led_ps.value(0)
 
-if __name__ == "__main__":
-    comports_ = [list(list_ports.comports())]
+    led_gps_ready = Pin(16, Pin.OUT)
+    led_sms_send = Pin(17, Pin.OUT)
 
-    gps_module_port = comports_[0][0].device
-    gsm_module_port = comports_[0][1].device
+    led_gps_ready.value(0)
+    led_sms_send(0)
 
-    serialPort = serial.Serial(port=gps_module_port, baudrate=9600,
-                               bytesize=8, timeout=1, stopbits=serial.STOPBITS_ONE)
-    serialPort.close()
+    # Pin 1 <-> Tx, Pin 2 <-> Rx => gsm
+    # Pin 6 <-> Tx, Pin 7 <-> Rx => gps
+    serialPortGps = UART(1, 9600)  # init with given baudrate
+    serialPortGps.init(9600, bits=8, parity=None, stop=1)  # init with given param
 
-    # For gsm module it is not mandatory to write smth to it,
-    # from it we can use only Rx pin and to parse the existing
-    # string of bytes.
+    serialPortGsm = UART(0, 115200)  # init with given baudrate
+    serialPortGsm.init(115200, bits=8, parity=None, stop=1)  # init with given param
 
-    serialPort.open()
-    dummyByte = serialPort.read(1)
-    if dummyByte != b'$':    # use != if gps var is used above
-        serialPort.close()
-        gps_module_port, gsm_module_port = swap(gps_module_port, gsm_module_port)
-
-    serialPort.close()
-    serialPortGsm = serial.Serial(port=gsm_module_port, baudrate=115200, bytesize=8,
-                                  timeout=1, stopbits=serial.STOPBITS_ONE)
-    serialPortGps = serial.Serial(port=gps_module_port, baudrate=9600, bytesize=8,
-                                  timeout=1, stopbits=serial.STOPBITS_ONE)
-
-    messageGPS = ""
-    commandATGsm = ""
+    ob_data_gps = DataGPS()
+    data_stored_gps_msg_dim = 3
 
     startByte = bytes(1)
     readByte = bytes(1)
 
-    data_line_extracted = 10
-    ob_data_gps = DataGPS()
-    ob_data_gsm = DataGSM(serial_port_gsm=serialPortGsm,
-                          on_off_txt_mode=True,
-                          format_txt_mode=False)
-    try:
-        for i in range(data_line_extracted):
-            startByte = serialPortGps.read(1)
+    while True:
+        i = 0
+        while i < data_stored_gps_msg_dim:
+            while True:
+                startByte = serialPortGps.read(1)
+                if startByte == b'$':
+                    break
+
             gpsDataFormatGGA = False
-            messageGPS = ""
+            messageGPS = b''
 
             while True:
                 readByte = serialPortGps.read(1)
                 if readByte == b'\n' or readByte == b'\r':
                     break
-                messageGPS = messageGPS + str(readByte.decode('ascii'))
+                if None == readByte:
+                    continue
+                messageGPS = messageGPS + readByte
 
+            messageGPS = "".join(['{:c}'.format(b) for b in messageGPS])
+            print(messageGPS)
             gpsDataFormatGGA = messageGPS.startswith('GPGGA')
             if gpsDataFormatGGA:
                 ob_data_gps.add_string(messageGPS)
+                led_gps_ready.on()
+                i = i + 1
+            else:
+                continue
+                led_gps_ready.off()
 
         ob_data_gps.parse_message()
         ob_data_gps.display_()
-    except KeyboardInterrupt:
-        pass
-    serialPortGps.close()
 
-    url_data_gps = URL()
-    url_data_gps.format_gm_acc = url_data_gps.format_gm_acc.replace("#", ob_data_gps.latitude[0])
-    url_data_gps.format_gm_acc = url_data_gps.format_gm_acc.replace("$", ob_data_gps.longitude[0])
-    webbrowser.open_new_tab(url_data_gps.format_gm_acc)
-    """ for using only open()
-        new=0 -> url open in the same browser window 
-        new=1 -> a new browser window is opened
-        new=2 -> a new browser tab is opened
-    """
+        url_data_gps = URL()
+        url_data_gps.format_gm_acc = url_data_gps.format_gm_acc.replace("#", ob_data_gps.latitude[0])
+        url_data_gps.format_gm_acc = url_data_gps.format_gm_acc.replace("$", ob_data_gps.longitude[0])
+
+        ob_data_gps.delete_string()
