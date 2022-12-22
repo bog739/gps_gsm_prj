@@ -18,6 +18,8 @@ class DataGPS:
         self.latitude = []   # first to be inserted in maps
         self.longitude = []  # second to be inserted in maps
         self.utc_time = []
+        
+        self.flg_data_is_ready = False
 
     def add_string(self, item):
         self.message.append(item)
@@ -26,6 +28,11 @@ class DataGPS:
         del self.message
         self.message = []
 
+    def check_for_data(self):
+        if self.flg_data_is_ready:
+            return True
+        return False
+        
     def parse_message(self):
         """
         Function to parse the string of bytes coming from a GPS module,
@@ -37,8 +44,11 @@ class DataGPS:
             split_msg = self.message[x].split(",")  # take first one just to practice
             del split_msg[13]  # 13th element is a whitespace, from datasheet
             if self.white_space in split_msg:
+                self.flg_data_is_ready = False
                 break
-
+            else:
+                self.flg_data_is_ready = True
+            
             self.latitude_raw = split_msg[self.latitude_pos]
             self.longitude_raw = split_msg[self.longitude_pos]
             self.utc_time_raw = split_msg[self.utc_time_pos]
