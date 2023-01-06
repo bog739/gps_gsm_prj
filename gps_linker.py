@@ -26,12 +26,18 @@ class DataGPS:
 
     def delete_string(self):
         del self.message
+        del self.latitude
+        del self.longitude
+        del self.utc_time
+        del self.gps_format_data
         self.message = []
+        self.latitude = []
+        self.longitude = []
+        self.utc_time = []
+        self.gps_format_data = []
 
     def check_for_data(self):
-        if self.flg_data_is_ready:
-            return True
-        return False
+        return self.flg_data_is_ready
         
     def parse_message(self):
         """
