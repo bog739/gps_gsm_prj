@@ -13,17 +13,7 @@ import time
 import binascii
 import uasyncio
 
-serial_port_gsm = UART(0, 115200)  # init with given baudrate
-serial_port_gsm.init(115200, bits=8, parity=None, stop=1, timeout=0)  # init with given param
-
-ob_data_gps = DataGPS()
-ob_data_gsm = DataGSM(serial_port_gsm, True, False)
-ob_data_gsm.init() # initialise gsm module with the wanted settings
-
-url_data_gps = URL()
-
-async def fetch_gps_data_send_msg():
-    print('here1')
+async def fetch_gps_data():
     led_ps = Pin(25, Pin.OUT)  # led PS -> RaspberryPiPico
     led_ps.value(0)
 
@@ -35,7 +25,8 @@ async def fetch_gps_data_send_msg():
     serial_port_gps = UART(1, 9600)  # init with given baudrate
     serial_port_gps.init(9600, bits=8, parity=None, stop=1, timeout=0)  # init with given param
     serial_reader_gps = uasyncio.StreamReader(serial_port_gps)
-
+    ob_data_gps = DataGPS()
+    
     data_stored_gps_msg_dim = 3
 
     start_byte = bytes(1)
@@ -61,15 +52,21 @@ async def fetch_gps_data_send_msg():
         ob_data_gps.parse_message()
         if ob_data_gps.check_for_data():
             led_gps_ready.on()
-            url_data_gps.url_google_maps = url_data_gps.url_google_maps.replace("#", ob_data_gps.latitude[0])
-            url_data_gps.url_google_maps = url_data_gps.url_google_maps.replace("$", ob_data_gps.longitude[0])
+            URL.url_google_maps = URL.url_google_maps.replace("#", ob_data_gps.latitude[0]) #static variable to be accessed between files
+            URL.url_google_maps = URL.url_google_maps.replace("$", ob_data_gps.longitude[0])
+            await uasyncio.sleep(10)
             ob_data_gps.delete_string()
             led_gps_ready.off()
 
 async def main():
-    uasyncio.create_task(fetch_gps_data_send_msg()) #by default
-    uasyncio.create_task(ob_data_gsm.read_from_gsm())
-    uasyncio.create_task(ob_data_gsm.send_message(url_data_gps.url_google_maps)) #make this variable global
+    serial_port_gsm = UART(0, 115200)  # init with given baudrate
+    serial_port_gsm.init(115200, bits=8, parity=None, stop=1, timeout=0)  # init with given param
+
+    ob_data_gsm = DataGSM(serial_port_gsm, True, False)
+    ob_data_gsm.init() # initialise gsm module with the wanted settings
+
+    uasyncio.create_task(fetch_gps_data()) #by default
+    uasyncio.create_task(ob_data_gsm.read_from_gsm_send_sms()) #make this variable global
     while True:
         await uasyncio.sleep(1)
 

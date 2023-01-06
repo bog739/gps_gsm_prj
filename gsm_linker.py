@@ -1,5 +1,8 @@
+
 import time
 import uasyncio
+from url_format import URL
+
 from machine import Pin
 
 class DataGSM:
@@ -25,8 +28,6 @@ class DataGSM:
         self.number = ''
         self.msg_from = ''
         self.index = 1
-        self.flg_read_func = False
-        self.flg_send_msg = True #first time
         self.led_sms_send = Pin(17, Pin.OUT)
         self.led_sms_send.value(0)
         
@@ -102,60 +103,62 @@ class DataGSM:
             <mt> 1 -> +CMTI: <mem>, <index> returned
             rest are default values
         """
-    #merge below functions to simplify process
-    async def send_message(self, msg):
+        
+    async def read_from_gsm_send_sms(self):
         while True:
-            if self.flg_read_func == True:
-                self.flg_send_msg = False
-                print('here4')
-                await self.serial_writer.write(self.send_msg + self.number + '\r\n')
-                await self.serial_writer.drain()
-                await uasyncio.sleep(5)
-                #if self.msg_from == "#":
-                self.led_sms_send.on()
-                await uasyncio.sleep(5)
-                print(msg)
-                await self.serial_writer.write(msg)
-                await self.serial_writer.drain()
-                await uasyncio.sleep(5)
-                await self.serial_writer.write(chr(26)) # Ctrl+Z
-                await self.serial_writer.drain()
-                await uasyncio.sleep(5)
-                self.led_sms_send.off()
-                await uasyncio.sleep(5)
-                self.flg_read_func = False
-                self.flg_send_msg = True
+            wait_sec = 10
+            while wait_sec != 0:
+                dummy_data = await self.serial_reader.readline()
+                await uasyncio.sleep(1)
+                wait_sec = wait_sec - 1
+            #wait if gsm receives a sms it transmit on uart some data bcs of it
+        
+            self.serial_writer.write(self.read_msg + str(self.index) + '\r\n')
+            await self.serial_writer.drain()
+
+            white_space = await self.serial_reader.readline()
+            print(b'whitespace:' + white_space)
             
-    async def read_from_gsm(self):
-        while True:
-            #uasyncio.sleep(3) # delay to get into send_message func
-            if self.flg_send_msg == True:
-                self.flg_read_func = False
-                self.serial_writer.write(self.read_msg + str(self.index) + '\r\n')
-                await self.serial_writer.drain()
-                await uasyncio.sleep(10)
-                
-                white_space = await self.serial_reader.readline()
-                #await uasyncio.sleep(5)
-                print(b'whitespace:' + white_space)
-                cmd = await self.serial_reader.readline()
-                #await uasyncio.sleep(5)
-                print(b'cmd:' + cmd)
-                msg = await self.serial_reader.readline()
-                #await uasyncio.sleep(5)
-                print(b'msg:' + msg)
-                #await uasyncio.sleep(5)
-                if white_space != b'+CMS ERROR: 321\r\n' and cmd != b'+CMS ERROR: 321\r\n' and msg != b'+CMS ERROR: 321\r\n': # then exists sms with this index
-                    cmd = "".join(['{:c}'.format(b) for b in cmd])
-                    if cmd[0] == '+' and len(cmd) > 50:
-                        self.number = cmd.split(",")[1] #phone number
-                    print(self.number)
+            cmd = await self.serial_reader.readline()
+            print(b'cmd:' + cmd)
+            
+            msg = await self.serial_reader.readline()
+            print(b'msg:' + msg)
+            
+            if white_space != b'+CMS ERROR: 321\r\n' and cmd != b'+CMS ERROR: 321\r\n' and msg != b'+CMS ERROR: 321\r\n': # then exists sms with this index
+                cmd = "".join(['{:c}'.format(b) for b in cmd])
+                if cmd[0] == '+':
+                    print("Message with index: " + self.index)
+                    self.number = cmd.split(",")[1] #phone number
+                    print("Phone nr: " + self.number)
                     msg = "".join(['{:c}'.format(b) for b in msg])
                     self.msg_from = msg[0] # just one character # or !
-                    print(self.msg_from)
+                    print("Message: " + self.msg_from)
                     self.index = self.index + 1
                 else:
                     self.index = 1
-                    
-                self.flg_send_msg = False    
-                self.flg_read_func = True
+                    continue
+
+            if self.msg_from == "#":
+                self.led_sms_send.on() #msg is on its way
+                
+                await self.serial_writer.write(self.send_msg + self.number + '\r\n')
+                await self.serial_writer.drain()
+                await uasyncio.sleep(1)
+                
+                print(URL.url_google_maps)
+                await self.serial_writer.write(URL.url_google_maps) #use static variable
+                await self.serial_writer.drain()
+                await uasyncio.sleep(1)
+                
+                await self.serial_writer.write(chr(26)) # Ctrl+Z
+                await self.serial_writer.drain()
+                await uasyncio.sleep(1)
+                
+                self.led_sms_send.off()
+                await uasyncio.sleep(2)
+                self.led_sms_send.on()
+                await uasyncio.sleep(2)
+                self.led_sms_send.off()
+                #msg theoretically sent
+                
