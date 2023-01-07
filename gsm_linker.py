@@ -1,10 +1,9 @@
 
-import time
-import uasyncio
-
 from url_format import URL
 from machine import Pin
 from reset_if_blocked import ResetIfBlocked
+
+import uasyncio
 
 class DataGSM:
     def __init__(self,
@@ -61,7 +60,7 @@ class DataGSM:
         
     async def init(self):
         """ Init part """
-        await uasyncio.sleep(1) # for messages
+        await uasyncio.sleep(1) # for messages w.r power supply when gsm module is hooked up on a PCB
         ResetIfBlocked.wdt.feed()
         
         self.serial_writer.write(self.at_cmd + '\r\n')
@@ -151,7 +150,7 @@ class DataGSM:
                 ResetIfBlocked.wdt.feed()
                 white_space_byte = await self.serial_reader.readline()
                 ResetIfBlocked.wdt.feed()
-                print(white_space_byte)
+                #print(white_space_byte)
                 if temp_bytes == b'OK\r\n':
                     ResetIfBlocked.wdt.feed()
                     break
@@ -160,7 +159,7 @@ class DataGSM:
                     ResetIfBlocked.wdt.feed()
                     temp_bytes = await self.serial_reader.readline()
                     ResetIfBlocked.wdt.feed()
-                    print(temp_bytes)
+                    #print(temp_bytes)
                     if temp_bytes == b'OK\r\n':
                         ResetIfBlocked.wdt.feed()
                         self.no_messages = True
@@ -184,12 +183,12 @@ class DataGSM:
 
             if self.no_messages == True:
                 self.no_messages = False
-                print('No messages!')
+                #print('No messages!')
                 continue
 
             ResetIfBlocked.wdt.feed()
             if self.index != '':
-                print("Index extracted: " + self.index)
+                #print("Index extracted: " + self.index)
                 self.serial_writer.write(self.read_msg + str(self.index) + '\r\n')
                 await uasyncio.sleep(1)
                 await self.serial_writer.drain()
@@ -198,51 +197,50 @@ class DataGSM:
             white_space = await self.serial_reader.readline()
             await uasyncio.sleep(1)
             ResetIfBlocked.wdt.feed()
-            print(b'whitespace1:' + white_space)
+            #print(b'whitespace1:' + white_space)
             
             cmd = await self.serial_reader.readline()
             await uasyncio.sleep(1)
             ResetIfBlocked.wdt.feed()
-            print(b'cmd:' + cmd)
+            #print(b'cmd:' + cmd)
             if cmd == b'+CMS ERROR: 305\r\n':
                 continue
-            
-            #if cmd == b'+CMS ERROR: 321\r\n':
-            #    self.index = self.index + 1
-            #    continue
             
             msg = await self.serial_reader.readline()
             await uasyncio.sleep(1)
             ResetIfBlocked.wdt.feed()
-            print(b'msg:' + msg)
+            #print(b'msg:' + msg)
             
             white_space = await self.serial_reader.readline()
             await uasyncio.sleep(1)
             ResetIfBlocked.wdt.feed()
-            print(b'whitespace2:' + white_space)
+            #print(b'whitespace2:' + white_space)
             
             ok_resp = await self.serial_reader.readline()
             await uasyncio.sleep(1)
             ResetIfBlocked.wdt.feed()
-            print(b'->' + ok_resp)
+            #print(b'->' + ok_resp)
             
             if white_space != b'+CMS ERROR: 321\r\n' and cmd != b'+CMS ERROR: 321\r\n' and msg != b'+CMS ERROR: 321\r\n': # then exists sms with this index
                 cmd = "".join(['{:c}'.format(b) for b in cmd])
                 if cmd[0] == '+':
-                    print("Message with index: " + str(self.index))
+                    #print("Message with index: " + str(self.index))
                     self.number = cmd.split(",")[1] #phone number
-                    print("Phone nr: " + self.number)
+                    #print("Phone nr: " + self.number)
                     msg = "".join(['{:c}'.format(b) for b in msg])
                     self.msg_from = msg[0] # just one character # or !
-                    print("Message: " + self.msg_from)
-                    #self.index = self.index + 1
-                    self.serial_writer.write(self.delete_msg + self.index + '\r\n')
-                    await self.serial_writer.drain()
-                    ResetIfBlocked.wdt.feed()
+                    #print("Message: " + self.msg_from)
                     
-                    ok_resp = await self.serial_reader.readline()
-                    ResetIfBlocked.wdt.feed()
-                    print('Deleted msg - idx: ' + self.index)
+                    if URL.flg_url_state == True:
+                        self.serial_writer.write(self.delete_msg + self.index + '\r\n')
+                        await self.serial_writer.drain()
+                        ResetIfBlocked.wdt.feed()
+                    
+                        ok_resp = await self.serial_reader.readline()
+                        ResetIfBlocked.wdt.feed()
+                        #print('Deleted msg - idx: ' + self.index)
+                    else:
+                        continue
 
                 else:
                     self.serial_writer.write(self.delete_msg + self.index + '\r\n')
@@ -251,7 +249,7 @@ class DataGSM:
 
                     ok_resp = await self.serial_reader.readline()
                     ResetIfBlocked.wdt.feed()
-                    print('Deleted msg - idx: ' + self.index)
+                    #print('Deleted msg - idx: ' + self.index)
                     
                     ResetIfBlocked.wdt.feed()
                     continue
@@ -259,12 +257,33 @@ class DataGSM:
             if self.msg_from == '#': # TODO: and when it receives '!'
                 self.led_sms_send.on()
                 temp = self.send_msg + self.number
-                self.serial_writer.write("{}\r".format(temp))
+                self.serial_writer.write("{}\r\n".format(temp))
                 await self.serial_writer.drain()
                 ResetIfBlocked.wdt.feed()
                 await uasyncio.sleep(1)
                 
-                temp = "Tracker project, here is your link:\n" + URL.url_google_maps + str(chr(129))
+                temp = "Hi, there!\nKeep an eye on me, here is your link:\n" + URL.url_google_maps_normal + str(chr(129)) # 129 -> Enter
+                self.serial_writer.write(temp) #use static variable
+                await self.serial_writer.drain()
+                ResetIfBlocked.wdt.feed()
+                await uasyncio.sleep(1)
+            
+                self.serial_writer.write(chr(26)) # Ctrl+Z
+                await self.serial_writer.drain()
+                await uasyncio.sleep(1)
+                ResetIfBlocked.wdt.feed()
+                
+                self.led_sms_send.off()
+            
+            if self.msg_from == '!':
+                self.led_sms_send.on()
+                temp = self.send_msg + self.number
+                self.serial_writer.write("{}\r\n".format(temp))
+                await self.serial_writer.drain()
+                ResetIfBlocked.wdt.feed()
+                await uasyncio.sleep(1)
+                
+                temp = "Hi, there!\nKeep an eye on me, here is your link:\n" + URL.url_google_maps_satellite + str(chr(129)) # 129 -> Enter
                 self.serial_writer.write(temp) #use static variable
                 await self.serial_writer.drain()
                 ResetIfBlocked.wdt.feed()

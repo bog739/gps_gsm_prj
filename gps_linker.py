@@ -1,6 +1,11 @@
 
+from machine import Pin, UART
+from url_format import URL
+
+import uasyncio
+
 class DataGPS:
-    def __init__(self, message=None):
+    def __init__(self, serial_port_gps, message=None):
         if message is None:
             message = []
         self.white_space = ""
@@ -20,6 +25,8 @@ class DataGPS:
         self.utc_time = []
         
         self.flg_data_is_ready = False
+        
+        self.serial_reader_gps = uasyncio.StreamReader(serial_port_gps)
 
     def add_string(self, item):
         self.message.append(item)
@@ -88,3 +95,47 @@ class DataGPS:
     def display_(self):
         for x in range(0, len(self.message)):
             print(self.gps_format_data[x])
+            
+    async def fetch_gps_data(self):
+        led_ps = Pin(25, Pin.OUT)  # led PS -> RaspberryPiPico
+        led_ps.value(0)
+
+        led_gps_ready = Pin(16, Pin.OUT)
+        led_gps_ready.value(0)
+        
+        data_stored_gps_msg_dim = 3
+
+        start_byte = bytes(1)
+        read_byte = bytes(1)
+
+        while True:
+            i = 0
+            while i < data_stored_gps_msg_dim:
+                gps_data_format_gga = False
+                message_gps = b''
+                
+                message_gps = await self.serial_reader_gps.readline()
+                message_gps = message_gps[1:(len(message_gps) - 1)] # get rid of $ sign and '\r'
+                message_gps = "".join(['{:c}'.format(b) for b in message_gps])
+                
+                gps_data_format_gga = message_gps.startswith('GPGGA')
+                if gps_data_format_gga:
+                    self.add_string(message_gps)
+                    i = i + 1
+                else:
+                    continue
+                    
+            self.parse_message()
+            if self.check_for_data():
+                led_gps_ready.on()
+                URL.url_google_maps_satellite = URL.url_google_maps_satellite.replace("#", self.latitude[0]) #static variable to be accessed between files
+                URL.url_google_maps_satellite = URL.url_google_maps_satellite.replace("$", self.longitude[0])
+                URL.url_google_maps_normal = URL.url_google_maps_normal.replace("#", self.latitude[0]) #static variable to be accessed between files
+                URL.url_google_maps_normal = URL.url_google_maps_normal.replace("$", self.longitude[0])
+                URL.flg_url_state = True
+                await uasyncio.sleep(1)
+                self.delete_string()
+                led_gps_ready.off()
+            else:
+                led_gps_ready.on()
+                URL.flg_url_state = False

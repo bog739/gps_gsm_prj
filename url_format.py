@@ -1,7 +1,6 @@
 
 class URL:
     url_google_maps = 'https://www.google.com/maps/@#,$,14z'
-    format_google_maps = 'https://www.google.com/maps/@46.7566592,23.6191744,14z'
-    #TODO: modify link below to be more generic
-    format_gm_acc = "https://www.google.com/maps/place/46%C2%B045'17.3%22N+23%C2%B034'47.9%22E/@#,$," \
-                    "17z/data=!4m4!3m3!8m2!3d#!4d$"
+    url_google_maps_satellite = "http://www.google.com/maps/place/#,$/@#,$,19z/data=!3m1!1e3"
+    url_google_maps_normal = "http://www.google.com/maps/place/#,/@#,$,19z/data=!3m1!4b1"
+    flg_url_state = False
