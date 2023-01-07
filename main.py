@@ -8,6 +8,7 @@ from url_format import URL
 
 from machine import Pin, UART
 from gps_linker import DataGPS
+from reset_if_blocked import ResetIfBlocked
 
 import time
 import binascii
@@ -54,7 +55,7 @@ async def fetch_gps_data():
             led_gps_ready.on()
             URL.url_google_maps = URL.url_google_maps.replace("#", ob_data_gps.latitude[0]) #static variable to be accessed between files
             URL.url_google_maps = URL.url_google_maps.replace("$", ob_data_gps.longitude[0])
-            await uasyncio.sleep(10)
+            await uasyncio.sleep(1)
             ob_data_gps.delete_string()
             led_gps_ready.off()
 
@@ -65,6 +66,7 @@ async def main():
     ob_data_gsm = DataGSM(serial_port_gsm, True, False)
     ob_data_gsm.init() # initialise gsm module with the wanted settings
 
+    ResetIfBlocked.wdt.feed()
     uasyncio.create_task(fetch_gps_data()) #by default
     uasyncio.create_task(ob_data_gsm.read_from_gsm_send_sms()) #make this variable global
     while True:

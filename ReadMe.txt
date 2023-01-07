@@ -26,3 +26,20 @@ how quick gps sends its data in its specific format.
 as expected, by using uasyncio lib with StreamWriter and StreamReader classes only then characters
 are stored in UART buffer and read or written as wanted. From StreamWriter class use drain function after a write func
 to output buffer data or just awrite method(it uses internally drain()).
+
+(change a bit below)
+Possibilities for gsm Ctrl-Z problem:
+->It takes some time to process, send and return a status for SMS so an
+immediate gsm.read() doesn't report anything. A subsequent gsm.read() might.
+I would keep issuing gsm.read() until you get something other than nothing.
+
+->The SIM800L isn't actioning the Ctrl-Z. Issuing a gsm.write('ABC\r') and a gsm.read()
+should show if it's still in its waiting for message mode.
+
+->For some reason the Ctrl-Z isn't being sent to the SIM800L.
+Again, issuing a gsm.write('ABC\r') and a gsm.read() should show if it's still in its waiting for message mode.
+
+->Looking at what gets sent out with a Terminal Emulator
+instead of the SIM800L should confirm whether Ctrl-Z's are sent or not.
+Being the ASCII code for "EOF - End of File' imeans it could be handled differently
+to printable ASCII codes, but if that's the case would how any other SIM900L user has achieved it.
