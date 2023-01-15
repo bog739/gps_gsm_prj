@@ -1,0 +1,8 @@
+(sym_lib_table
+  (lib (name "EEUFS1V102L")(type "KiCad")(uri "C:/Lib_components/EEUFS1V102L.kicad_sym")(options "")(descr ""))
+  (lib (name "TBJA105K016CBSB0823")(type "KiCad")(uri "C:/Lib_components/TBJA105K016CBSB0823.kicad_sym")(options "")(descr ""))
+  (lib (name "Raspberry_Pi_Pico_SC0915")(type "KiCad")(uri "C:/Lib_components/Raspberry_Pi_Pico_Kicad_Files/Raspberry_Pi_Pico_SC0915.kicad_sym")(options "")(descr ""))
+  (lib (name "pmod_gps")(type "KiCad")(uri "${KIPRJMOD}/pmod_gps.kicad_sym")(options "")(descr ""))
+  (lib (name "module_gsm_sym")(type "KiCad")(uri "${KIPRJMOD}/module_gsm_sym.kicad_sym")(options "")(descr ""))
+  (lib (name "T491A106K006AT")(type "KiCad")(uri "C:/Lib_components/T491A106K006AT.kicad_sym")(options "")(descr ""))
+)

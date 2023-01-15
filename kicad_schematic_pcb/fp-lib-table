@@ -1,0 +1,8 @@
+(fp_lib_table
+  (lib (name "usb_connector")(type "KiCad")(uri "${KIPRJMOD}/usb_connector.pretty")(options "")(descr ""))
+  (lib (name "capacitor")(type "KiCad")(uri "${KIPRJMOD}/capacitor.pretty")(options "")(descr ""))
+  (lib (name "PmodGps")(type "KiCad")(uri "${KIPRJMOD}/PmodGps.pretty")(options "")(descr ""))
+  (lib (name "Gsm_GA6")(type "KiCad")(uri "${KIPRJMOD}/Gsm_GA6.pretty")(options "")(descr ""))
+  (lib (name "Raspberry_Pi_Pico_Kicad_Files")(type "KiCad")(uri "C:/Lib_components/Raspberry_Pi_Pico_Kicad_Files")(options "")(descr ""))
+  (lib (name "Raspberry_Pi_Pico")(type "KiCad")(uri "${KIPRJMOD}/Raspberry_Pi_Pico.pretty")(options "")(descr ""))
+)
