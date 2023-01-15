@@ -1,0 +1,16 @@
+Date:,1/15/2023 17:50,,,
+Tool:,Eeschema (6.0.9),,,
+,,,,
+Component Count:,16,,,
+Ref,Qnty,Value,Cmp name,Description
+"A1, ",1,SC0915,SC0915,Pi Pico board
+"C1, C2, C3, C4, C5, ",5,10uF,T491A106K006AT,capacitors
+"D1, ",1,LED_power,LED,Light emitting diode
+"D2, ",1,LED_gps,LED,Light emitting diode
+"D3, ",1,LED_gsm,LED,Light emitting diode
+"J1, ",1,USB_B,USB_B,USB Type B connector
+"R1, ",1,300Ω,R,Resistor
+"R2, R3, ",2,10kΩ,R,Resistor
+"U1, ",1,LD1117S33TR_SOT223,LD1117S33TR_SOT223,"800mA Fixed Low Drop Positive Voltage Regulator, Fixed Output 3.3V, SOT-223"
+"U2, ",1,Pmod_GPS,Pmod_GPS,gps module
+"U3, ",1,GSM_module,GSM_module,gsm module
