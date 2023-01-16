@@ -5,10 +5,6 @@ on a simple plastic board with attached cables for
 TTL conversion for USB and Pycharm was used to link up
 with devices.
 
--> Virtual environment for
-python interpreter for desktop was left here if anyone
-want to build it, files for pcb and scheme is yet to come !!
-
 -> In meantime the development of this project started on Pi pico, and
 Thonny IDE is used afterwards, MicroPython plugin for Pycharm is not
 so great. Although, Thonny IDE needs some improvement for USB communication, but for this
@@ -27,19 +23,18 @@ as expected, by using uasyncio lib with StreamWriter and StreamReader classes on
 are stored in UART buffer and read or written as wanted. From StreamWriter class use drain function after a write func
 to output buffer data or just awrite method(it uses internally drain()).
 
-(change a bit below)
 Possibilities for gsm Ctrl-Z problem:
-->It takes some time to process, send and return a status for SMS so an
-immediate gsm.read() doesn't report anything. A subsequent gsm.read() might.
-I would keep issuing gsm.read() until you get something other than nothing.
+-> It takes some time to process, send and return a status for SMS so an
+immediate read doesn't report anything. A subsequent read may.
+I would keep issuing read until you get something other than nothing.
 
-->The SIM800L isn't actioning the Ctrl-Z. Issuing a gsm.write('ABC\r') and a gsm.read()
+-> The GA6 isn't actioning the Ctrl-Z. Issuing a write 'ABC\r' and a read
 should show if it's still in its waiting for message mode.
 
-->For some reason the Ctrl-Z isn't being sent to the SIM800L.
-Again, issuing a gsm.write('ABC\r') and a gsm.read() should show if it's still in its waiting for message mode.
+-> For some reason the Ctrl-Z isn't being sent to the GA6.
+Again, issuing a write 'ABC\r' and a read should show if it's still in its waiting for message mode.
 
-->Looking at what gets sent out with a Terminal Emulator
-instead of the SIM800L should confirm whether Ctrl-Z's are sent or not.
+-> Looking at what gets sent out with a Terminal Emulator
+instead of the GA6 should confirm whether Ctrl-Z's are sent or not.
 Being the ASCII code for "EOF - End of File' imeans it could be handled differently
-to printable ASCII codes, but if that's the case would how any other SIM900L user has achieved it.
+to printable ASCII codes, but if that's the case would how any other GA6 user has achieved it.
