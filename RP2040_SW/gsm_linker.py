@@ -275,7 +275,7 @@ class DataGSM:
                 
                 self.led_sms_send.off()
             
-            if self.msg_from == '!':
+            if self.msg_from == '!': # check how gsm interprets '$' sign
                 self.led_sms_send.on()
                 temp = self.send_msg + self.number
                 self.serial_writer.write("{}\r\n".format(temp))
